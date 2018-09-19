@@ -1,26 +1,13 @@
-FROM tomcat:7
+FROM jetty
 
-ENV JAVA_VER 8
-ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
+ENV JETTY_HOME /usr/local/jetty
+ENV JETTY_BASE /var/lib/jetty
 
-RUN echo 'deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main' >> /etc/apt/sources.list && \
-    echo 'deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main' >> /etc/apt/sources.list && \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C2518248EEA14886 && \
-    apt-get update && \
-    echo oracle-java${JAVA_VER}-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections && \
-    apt-get install -y --force-yes --no-install-recommends oracle-java${JAVA_VER}-installer oracle-java${JAVA_VER}-set-default && \
-    apt-get clean && \
-    rm -rf /var/cache/oracle-jdk${JAVA_VER}-installer
+WORKDIR /var/lib/jetty
 
-RUN update-java-alternatives -s java-8-oracle
+RUN java -version
+RUN java -jar "$JETTY_HOME/start.jar" --add-to-startd=jmx,stats
 
-RUN echo "export JAVA_HOME=/usr/lib/jvm/java-8-oracle" >> ~/.bashrc
-
-ENV CATALINA_HOME /usr/local/tomcat
-ENV PATH $CATALINA_HOME/bin:$PATH
-
-WORKDIR /usr/local/tomcat
-ADD /target/hello-world-war-1.0.0.war $CATALINA_HOME/webapps
-
+COPY /target/hello-world-war-1.0.0.war $JETTY_BASE/webapps/ROOT.war
 EXPOSE 8080
-CMD exec ${CATALINA_HOME}/bin/catalina.sh run
+CMD exec ${JETTY_HOME}/bin/jetty.sh run
